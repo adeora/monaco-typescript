@@ -18,11 +18,14 @@
 		}
 	};
 </script>
-<script src="../node_modules/monaco-editor-core/dev/vs/loader.js"></script>
+<!-- <script src="reflect-metadata.js"></script> -->
+ <script src="../node_modules/monaco-editor-core/dev/vs/loader.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.js"></script> -->
 <script src="../node_modules/monaco-editor-core/dev/vs/editor/editor.main.nls.js"></script>
 <script src="../node_modules/monaco-editor-core/dev/vs/editor/editor.main.js"></script>
 
 <script>
+	console.log(require);
 	require([
 		'vs/language/typescript/src/monaco.contribution'
 	], function() {

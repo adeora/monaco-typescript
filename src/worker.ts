@@ -4,6 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 'use strict';
 
+import {create as createAngularLs} from './language-service';
+// import '../lib/reflect-metadata';
+
 import ts = require('../lib/typescriptServices');
 import { contents as libdts } from '../lib/lib-ts';
 import { contents as libes6ts } from '../lib/lib-es6-ts';
@@ -27,13 +30,39 @@ export class TypeScriptWorker implements ts.LanguageServiceHost {
 
 	private _ctx: IWorkerContext;
 	private _extraLibs: { [fileName: string]: string } = Object.create(null);
-	private _languageService = ts.createLanguageService(this);
+
+	// old creation function
+	// private _languageService = ts.createLanguageService(this);
+	private _languageService: ts.LanguageService;
 	private _compilerOptions: ts.CompilerOptions;
 
 	constructor(ctx: IWorkerContext, createData: ICreateData) {
 		this._ctx = ctx;
 		this._compilerOptions = createData.compilerOptions;
 		this._extraLibs = createData.extraLibs;
+
+		this._languageService = ts.createLanguageService(this);
+
+		console.log(this._languageService);
+
+		let params = {
+			project: {
+				projectService: {
+					logger: {info: console.warn}
+				}
+			},
+			languageService: this._languageService,
+			languageServiceHost: this,
+			serverHost: {},
+			config: {}
+		};
+
+		console.log(params);
+
+		let ngLanguageService: ts.LanguageService = createAngularLs(params);
+		console.log(ngLanguageService);
+
+		this._languageService = ngLanguageService;
 	}
 
 	// --- language service host ---------------
