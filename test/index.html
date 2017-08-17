@@ -4,6 +4,7 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 	<link rel="stylesheet" data-name="vs/editor/editor.main" href="../node_modules/monaco-editor-core/dev/vs/editor/editor.main.css">
+	<script src="https://unpkg.com/reflect-metadata@0.1.10/Reflect.js"></script>
 </head>
 <body>
 
@@ -24,141 +25,100 @@
 <script src="../node_modules/monaco-editor-core/dev/vs/editor/editor.main.nls.js"></script>
 <script src="../node_modules/monaco-editor-core/dev/vs/editor/editor.main.js"></script>
 
+
 <script>
 	console.log(require);
 	require([
 		'vs/language/typescript/src/monaco.contribution'
 	], function() {
-		var editor = monaco.editor.create(document.getElementById('container'), {
-			value: [
-				'/* Game of Life',
-				' * Implemented in TypeScript',
-				' * To learn more about TypeScript, please visit http://www.typescriptlang.org/',
-				' */',
-				'',
-				'module Conway {',
-				'',
-				'	export class Cell {',
-				'		public row: number;',
-				'		public col: number;',
-				'		public live: boolean;',
-				'',
-				'		constructor(row: number, col: number, live: boolean) {',
-				'			this.row = row;',
-				'			this.col = col;',
-				'			this.live = live',
-				'		}',
-				'	}',
-				'',
-				'	export class GameOfLife {',
-				'		private gridSize: number;',
-				'		private canvasSize: number;',
-				'		private lineColor: string;',
-				'		private liveColor: string;',
-				'		private deadColor: string;',
-				'		private initialLifeProbability: number;',
-				'		private animationRate: number;',
-				'		private cellSize: number;',
-				'		private context: CanvasRenderingContext2D;',
-				'		private world;',
-				'',
-				'',
-				'		constructor() {',
-				'			this.gridSize = 50;',
-				'			this.canvasSize = 600;',
-				'			this.lineColor = \'#cdcdcd\';',
-				'			this.liveColor = \'#666\';',
-				'			this.deadColor = \'#eee\';',
-				'			this.initialLifeProbability = 0.5;',
-				'			this.animationRate = 60;',
-				'			this.cellSize = 0;',
-				'			this.world = this.createWorld();',
-				'			this.circleOfLife();',
-				'		}',
-				'',
-				'		public createWorld() {',
-				'			return this.travelWorld( (cell : Cell) =>  {',
-				'				cell.live = Math.random() < this.initialLifeProbability;',
-				'				return cell;',
-				'			});',
-				'		}',
-				'',
-				'		public circleOfLife() : void {',
-				'			this.world = this.travelWorld( (cell: Cell) => {',
-				'				cell = this.world[cell.row][cell.col];',
-				'				this.draw(cell);',
-				'				return this.resolveNextGeneration(cell);',
-				'			});',
-				'			setTimeout( () => {this.circleOfLife()}, this.animationRate);',
-				'		}',
-				'',
-				'		public resolveNextGeneration(cell : Cell) {',
-				'			var count = this.countNeighbors(cell);',
-				'			var newCell = new Cell(cell.row, cell.col, cell.live);',
-				'			if(count < 2 || count > 3) newCell.live = false;',
-				'			else if(count == 3) newCell.live = true;',
-				'			return newCell;',
-				'		}',
-				'',
-				'		public countNeighbors(cell : Cell) {',
-				'			var neighbors = 0;',
-				'			for(var row = -1; row <=1; row++) {',
-				'				for(var col = -1; col <= 1; col++) {',
-				'					if(row == 0 && col == 0) continue;',
-				'					if(this.isAlive(cell.row + row, cell.col + col)) {',
-				'						neighbors++;',
-				'					}',
-				'				}',
-				'			}',
-				'			return neighbors;',
-				'		}',
-				'',
-				'		public isAlive(row : number, col : number) {',
-				'			if(row < 0 || col < 0 || row >= this.gridSize || col >= this.gridSize) return false;',
-				'			return this.world[row][col].live;',
-				'		}',
-				'',
-				'		public travelWorld(callback) {',
-				'			var result = [];',
-				'			for(var row = 0; row < this.gridSize; row++) {',
-				'				var rowData = [];',
-				'				for(var col = 0; col < this.gridSize; col++) {',
-				'					rowData.push(callback(new Cell(row, col, false)));',
-				'				}',
-				'				result.push(rowData);',
-				'			}',
-				'			return result;',
-				'		}',
-				'',
-				'		public draw(cell : Cell) {',
-				'			if(this.context == null) this.context = this.createDrawingContext();',
-				'			if(this.cellSize == 0) this.cellSize = this.canvasSize/this.gridSize;',
-				'',
-				'			this.context.strokeStyle = this.lineColor;',
-				'			this.context.strokeRect(cell.row * this.cellSize, cell.col*this.cellSize, this.cellSize, this.cellSize);',
-				'			this.context.fillStyle = cell.live ? this.liveColor : this.deadColor;',
-				'			this.context.fillRect(cell.row * this.cellSize, cell.col*this.cellSize, this.cellSize, this.cellSize);',
-				'		}',
-				'',
-				'		public createDrawingContext() {',
-				'			var canvas = <HTMLCanvasElement> document.getElementById(\'conway-canvas\');',
-				'			if(canvas == null) {',
-				'					canvas = document.createElement(\'canvas\');',
-				'					canvas.id = \'conway-canvas\';',
-				'					canvas.width = this.canvasSize;',
-				'					canvas.height = this.canvasSize;',
-				'					document.body.appendChild(canvas);',
-				'			}',
-				'			return canvas.getContext(\'2d\');',
-				'		}',
-				'	}',
-				'}',
-				'',
-				'var game = new Conway.GameOfLife();',
 
-			].join('\n'),
-			language: 'typescript'
+		var uri = new monaco.Uri();
+		uri._path = "index.ts";
+		uri._fsPath = "index.ts";
+
+		var model = monaco.editor.createModel(`
+import {BrowserModule} from '@angular/platform-browser';
+import {Component, NgModule, ApplicationRef} from '@angular/core';
+
+export class Hero { id: number; name: string }
+
+const HEROES: Hero[] = [
+ {id: 11, name: 'Batman'},
+ {id: 12, name: 'Wonder Woman'},
+ {id: 12, name: 'Iron Man'},
+]
+
+@Component({
+  selector: 'hello-world-app',
+  templateUrl: "./templates/template.html",
+})
+export class HelloWorldComponent {
+  heroes = HEROES;
+  selectedHero: Hero;
+  onSelect(hero: Hero): void { this.selectedHero = hero; }
+}
+
+@NgModule({
+  imports: [BrowserModule],
+  declarations: [HelloWorldComponent],
+  entryComponents: [HelloWorldComponent],
+  bootstrap: [HelloWorldComponent]
+})
+export class MainModule {
+}`, "typescript", uri);
+
+
+		var editor = monaco.editor.create(document.getElementById('container'), {
+			model: model
 		});
+
+		monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+			target: monaco.languages.typescript.ScriptTarget.ES2015,
+			allowNonTsExtensions: true,
+			experimentalDecorators: true,
+			noImplicitAny: true,
+			moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+			module: monaco.languages.typescript.ModuleKind.CommonJS,
+			traceResolution: true,
+			typeRoots: ["node_modules/"],
+			plugins: [
+				{"name": "@angular/language-service"}
+			]
+		});
+
+
+		// fetch("http://localhost:8081/compiler_bundle.json").then(r => {
+		// 	r.json().then((data) => {
+		// 		console.log(data);
+
+		// 		let files = Object.keys(data.fileSystem);
+		// 		var i;
+		// 		var num_added = 0;
+		// 		for (i = 0; i < files.length; i++) {
+
+		// 			// if (num_added > 5) {
+		// 			// 	break;
+		// 			// }
+
+		// 			console.log(`file ${i} of ${files.length}`);
+		// 			var filename = files[i];
+		// 			if (filename.indexOf("node_modules/") != 0 ||
+		// 				filename.indexOf("/typescript/") != -1)
+		// 			{
+		// 					continue;
+		// 			}
+		// 			// monaco.languages.typescript.typescriptDefaults.addExtraLib(
+		// 			// 	data.fileSystem[filename].text,
+		// 			// 	filename
+		// 			// );
+		// 			num_added++;
+		// 		}
+		// 	});
+		// });
+
+
+
+
 	});
 </script>
 

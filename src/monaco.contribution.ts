@@ -52,12 +52,12 @@ export class LanguageServiceDefaultsImpl implements monaco.languages.typescript.
 		}
 
 		this._extraLibs[filePath] = content;
-		this._onDidChange.fire(this);
+		// this._onDidChange.fire(this);
 
 		return {
 			dispose: () => {
 				if (delete this._extraLibs[filePath]) {
-					this._onDidChange.fire(this);
+					// this._onDidChange.fire(this);
 				}
 			}
 		};

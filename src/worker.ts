@@ -2,10 +2,14 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-'use strict';
+// 'use strict';
 
 import {create as createAngularLs} from './language-service';
 // import '../lib/reflect-metadata';
+
+// how the original language service bundle would be imported
+//
+// import ls from './language-service';
 
 import ts = require('../lib/typescriptServices');
 import { contents as libdts } from '../lib/lib-ts';
@@ -15,21 +19,36 @@ import Promise = monaco.Promise;
 import IWorkerContext = monaco.worker.IWorkerContext;
 
 const DEFAULT_LIB = {
-	NAME: 'defaultLib:lib.d.ts',
+	NAME: 'file:///defaultLib:lib.d.ts',
 	CONTENTS: libdts
 };
 
 const ES6_LIB = {
-	NAME: 'defaultLib:lib.es6.d.ts',
+	NAME: 'file:///defaultLib:lib.es6.d.ts',
 	CONTENTS: libes6ts
 };
+
+function fetchLocal(url) {
+  return new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest
+    xhr.onload = function() {
+      resolve(new Response(xhr.responseText, {status: xhr.status}))
+    }
+    xhr.onerror = function() {
+      reject(new TypeError('Local request failed'))
+    }
+    xhr.open('GET', url)
+    xhr.send(null)
+  })
+}
 
 export class TypeScriptWorker implements ts.LanguageServiceHost {
 
 	// --- model sync -----------------------
 
 	private _ctx: IWorkerContext;
-	private _extraLibs: { [fileName: string]: string } = Object.create(null);
+	// private _extraLibs: { [fileName: string]: string } = Object.create(null);
+	private _extraLibs: { [fileName: string]: string } = {};
 
 	// old creation function
 	// private _languageService = ts.createLanguageService(this);
@@ -39,16 +58,79 @@ export class TypeScriptWorker implements ts.LanguageServiceHost {
 	constructor(ctx: IWorkerContext, createData: ICreateData) {
 		this._ctx = ctx;
 		this._compilerOptions = createData.compilerOptions;
-		this._extraLibs = createData.extraLibs;
+		console.log("Compiler options: ", this._compilerOptions);
+		// this._extraLibs = createData.extraLibs;
+		this._extraLibs = {};
 
 		this._languageService = ts.createLanguageService(this);
 
 		console.log(this._languageService);
+		console.log(ts);
+
+		// right now this is because we're running on a file URL
+		// fetch("http://localhost:8081/compiler_bundle.json").then(r => {
+		// 	r.json().then((data) => {
+		// 		console.log(data);
+
+		// 		let files = Object.keys(data.fileSystem);
+		// 		var i;
+		// 		var num_added = 0;
+		// 		for (i = 0; i < files.length; i++) {
+
+		// 			// if (num_added > 5) {
+		// 			// 	break;
+		// 			// }
+
+		// 			console.log(`file ${i} of ${files.length}`);
+		// 			var filename = files[i];
+		// 			if (filename.indexOf("node_modules/") != 0 ||
+		// 				filename.indexOf("/typescript/") != -1)
+		// 			{
+		// 					continue;
+		// 			}
+
+		// 			this._extraLibs[filename] = data.fileSystem[filename].text;
+
+		// 			// monaco.languages.typescript.typescriptDefaults.addExtraLib(
+		// 			// 	data.fileSystem[filename].text,
+		// 			// 	filename
+		// 			// );
+		// 			num_added++;
+		// 		}
+		// 	});
+		// });
+
+		let xhr = new XMLHttpRequest();
+		xhr.open("GET", "http://localhost:8081/compiler_bundle.json", false);
+		xhr.send(null);
+
+		let data = JSON.parse(xhr.responseText);
+		let files = Object.keys(data.fileSystem);
+		var i;
+		for (i = 0; i < files.length; i++) {
+			console.log(`file ${i} of ${files.length}`);
+			var filename = files[i];
+			if (filename.indexOf("node_modules/") != 0 ||
+				filename.indexOf("/typescript/") != -1)
+			{
+					continue;
+			}
+
+			this._extraLibs[filename] = data.fileSystem[filename].text;
+		}
+
+		// console.log(this._extraLibs);
+
+		// console.log(this._languageService);
 
 		let params = {
 			project: {
 				projectService: {
-					logger: {info: console.warn}
+					logger: {
+						log: console.warn.bind(console),
+						info: console.warn.bind(console),
+
+					}
 				}
 			},
 			languageService: this._languageService,
@@ -57,10 +139,15 @@ export class TypeScriptWorker implements ts.LanguageServiceHost {
 			config: {}
 		};
 
-		console.log(params);
+		// console.log(params);
+
+		// how the original language service bundle would be used
+		//
+		// const l = ls({typescript: ts, path: {}, fs: {}});
+		// const ngLanguageService = l.create(params);
 
 		let ngLanguageService: ts.LanguageService = createAngularLs(params);
-		console.log(ngLanguageService);
+		// console.log(ngLanguageService);
 
 		this._languageService = ngLanguageService;
 	}
@@ -72,8 +159,11 @@ export class TypeScriptWorker implements ts.LanguageServiceHost {
 	}
 
 	getScriptFileNames(): string[] {
+		// console.count(`getScriptFileNames() called!`);
 		let models = this._ctx.getMirrorModels().map(model => model.uri.toString());
-		return models.concat(Object.keys(this._extraLibs));
+		let toReturn = models.concat(Object.keys(this._extraLibs));
+		// console.log("returning: ", toReturn);
+		return toReturn;
 	}
 
 	private _getModel(fileName: string): monaco.worker.IMirrorModel {
@@ -225,3 +315,4 @@ export interface ICreateData {
 export function create(ctx: IWorkerContext, createData: ICreateData): TypeScriptWorker {
 	return new TypeScriptWorker(ctx, createData);
 }
+

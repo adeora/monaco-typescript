@@ -2,7 +2,7 @@
   "compilerOptions": {
     "module": "amd",
     "outDir": "out",
-    "target": "es5",
+    "target": "ES2015",
     "allowJs": true
   },
   "include": [
